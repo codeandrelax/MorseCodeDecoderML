@@ -90,6 +90,22 @@ The words per minute (WPM) rate is fixed at 18 WPM for all training and test dat
 
 Future versions may allow dynamic WPM handling.
 
+## Requirements
+- Python 3.8+
+- PyTorch
+- torchaudio
+- matplotlib
+- scipy
+- numpy
+- torchvision
+- OpenCV
+- pygame (for audio playback)
+
+Install dependencies:
+```
+pip install -r requirements.txt
+```
+
 # Dataset
 
 Morse code audio file is produced after which it's spectrogram is generated.
