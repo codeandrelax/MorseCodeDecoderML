@@ -115,7 +115,7 @@ Please download the following files and place them in the root directory of the 
 
     morse_detect_model.pth — the Faster R-CNN model for Morse code detection on spectrograms
 
-Download link: 
+Download link: https://we.tl/t-M1GoQl9160
 
 Once downloaded, ensure the paths provided to the --decoder_model_path and --detection_model_path arguments in the scripts correctly point to these files.
 
