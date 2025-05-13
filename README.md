@@ -105,6 +105,19 @@ Install dependencies:
 ```
 pip install -r requirements.txt
 ```
+# Model Files
+
+The trained model files are not included in this repository due to their size. You will need to download them manually before running the transcription scripts.
+
+Please download the following files and place them in the root directory of the project:
+
+    morse_decode_model.pt — the BiLSTM model for Morse code transcription
+
+    morse_detect_model.pth — the Faster R-CNN model for Morse code detection on spectrograms
+
+Download link: 
+
+Once downloaded, ensure the paths provided to the --decoder_model_path and --detection_model_path arguments in the scripts correctly point to these files.
 
 # Dataset
 
