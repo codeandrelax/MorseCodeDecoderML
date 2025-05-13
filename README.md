@@ -1,4 +1,5 @@
 # Morse Code Audio Transcription with Deep Learning
+![image](https://github.com/user-attachments/assets/9a57c91c-b2c7-409e-9da1-1ec7b27db0d8)
 
 This project provides a full pipeline to transcribe Morse code audio signals into text, while also generating spectrogram images overlaid with detected Morse regions. Two deep learning models are used in tandem: one to decode the Morse sequence and another to detect where Morse code symbols appear in the spectrogram.
 
