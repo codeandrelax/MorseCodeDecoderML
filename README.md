@@ -3,10 +3,14 @@
 This project provides a full pipeline to transcribe Morse code audio signals into text, while also generating spectrogram images overlaid with detected Morse regions. Two deep learning models are used in tandem: one to decode the Morse sequence and another to detect where Morse code symbols appear in the spectrogram.
 
 ## Project Overview
-- BiLSTM Decoder: Translates the spectrogram into characters using a deep sequence model.
-- Faster R-CNN Detector: Identifies Morse elements (dots and dashes) in the spectrogram image.
-- Spectrogram Visualization: Optional visualization with overlaid detections.
-- Output: The transcription is saved in a .txt file, and the spectrogram (with overlay) as a .png.
+- Convert a text sentence into Morse audio (Text2MorseWav.py).
+- Decode a Morse audio file into text (MorseAudio2Text.py).
+- Visualize the Morse detections on the spectrogram and save them as PNGs.
+- Save the decoded transcription into a .txt file.
+- Use Latin or Cyrillic output script for transcribed text.
+- Uses two trained models:
+  -   A BiLSTM-based decoder with 2.5% character error rate (CER).
+  -   A Faster R-CNN detector to locate Morse symbols in spectrograms.
 
 ## Model Architectures
 ### BiLSTM Decoder
