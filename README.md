@@ -27,3 +27,9 @@ options:
   
   --interactive_threshold
                         Launch interactive threshold tuning
+
+  ## Setup
+
+  Run setup_env.sh script for Mac and Linux. (To make it executable use chmod +x setup_env.sh)
+
+  Run setup_env.bat script for Windows.
