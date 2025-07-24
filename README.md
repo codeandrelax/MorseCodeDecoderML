@@ -8,15 +8,22 @@ usage: main.py [-h] [--input_filename INPUT_FILENAME] [--lang {en,ru}] [--percen
 
 Read a WAV file and process it.
 
+
 options:
   -h, --help            show this help message and exit
+  
   --input_filename INPUT_FILENAME
                         Path to the WAV file
+                        
   --lang {en,ru}        Language for Morse decoding (en or ru)
+  
   --percentage PERCENTAGE
                         Threshold percentage (0-100)
+                        
   --otsu_threshold OTSU_THRESHOLD
                         Automatic percentage calculation. Set to 1 to engage
+                        
   --plot                Plot diagrams
+  
   --interactive_threshold
                         Launch interactive threshold tuning
