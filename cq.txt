@@ -1,0 +1,5 @@
+Decoded Text:
+TEST TEXT 
+
+Decoded Morse:
+- . ... - / - . -..- - /
