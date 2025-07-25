@@ -89,11 +89,12 @@ def detect_word_gaps_and_split(binary_signal, times, zero_threshold=20):
     return center_times, chunks
 
 
-def convert2binary(data, rate, smoothing_window=3, percentage=67, otsu_threshold=0):
-    filtered_data = data # bandpass_filter(data, rate) # don't use bandpass filter
-    times, power = compute_signal_power(filtered_data, rate)
-    smoothed_power = smooth_power(power, smoothing_window)
+def getSEnergy(data, rate, smoothing_window=3):
+    times, power = compute_signal_power(data, rate)
+    smoothed_power = smooth_power(power, smoothing_window) 
+    return power, smoothed_power, times
 
+def getBinarySignal(smoothed_power, times, percentage=67, otsu_threshold=0, zero_threshold=80):
     if otsu_threshold == 1:
         power_norm = (smoothed_power - np.min(smoothed_power)) / (np.max(smoothed_power) - np.min(smoothed_power))
         threshold = threshold_otsu(power_norm)
@@ -105,6 +106,26 @@ def convert2binary(data, rate, smoothing_window=3, percentage=67, otsu_threshold
     binary = np.where(smoothed_power > threshold, 1, 0)
     binary_clean = clean_binary(binary, min_duration=5)
 
-    center_times, chunks = detect_word_gaps_and_split(binary_clean, times, zero_threshold=80)
+    center_times, chunks = detect_word_gaps_and_split(binary_clean, times, zero_threshold=zero_threshold)
+
+    return binary_clean, chunks, center_times, threshold
+
+def convert2binary(data, rate, smoothing_window=3, percentage=67, otsu_threshold=0, zero_threshold=80):
+    filtered_data = data # bandpass_filter(data, rate) # don't use bandpass filter
+    times, power = compute_signal_power(filtered_data, rate)
+    smoothed_power = smooth_power(power, smoothing_window)
+
+    if otsu_threshold == 1:
+        power_norm = (smoothed_power - np.min(smoothed_power)) / (np.max(smoothed_power) - np.min(smoothed_power))
+        threshold = threshold_otsu(power_norm)
+        percentage = int(threshold * 100 + 0.5)
+
+    print(f"Binary threshold percentage: {percentage}")
+
+    threshold = kmeans_threshold(smoothed_power, percentage)
+    binary = np.where(smoothed_power > threshold, 1, 0)
+    binary_clean = clean_binary(binary, min_duration=5)
+
+    center_times, chunks = detect_word_gaps_and_split(binary_clean, times, zero_threshold=zero_threshold)
 
     return binary_clean, chunks, center_times, power, smoothed_power, times, threshold
