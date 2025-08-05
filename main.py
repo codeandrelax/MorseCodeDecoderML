@@ -14,6 +14,7 @@ import re
 
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, TextBox
+import matplotlib.gridspec as gridspec
 
 from scipy.signal import spectrogram
 
@@ -177,38 +178,41 @@ def main():
         f.write(cleaned_morse + "\n")
 
 def interactive_mode(data, rate, args):
-    fig, ax = plt.subplots(3, 1, figsize=(12, 10), sharex=True)
-    plt.subplots_adjust(bottom=0.25)
+    fig = plt.figure(figsize=(12, 8))
+    gs = gridspec.GridSpec(3, 1, height_ratios=[1, 1, 0.4])
 
-    # f, t_spec, Sxx = spectrogram(data, fs=rate, nperseg=256, noverlap=0)
-    # Sxx_dB = 10 * np.log10(Sxx + 1e-10)
+    ax0 = fig.add_subplot(gs[0])
+    ax1 = fig.add_subplot(gs[1], sharex=ax0)
 
-    # ax0 = ax[0]
-    # im = ax0.pcolormesh(t_spec, f, Sxx_dB, shading='gouraud', cmap='magma')
-    # ax0.set_ylabel('Freq [Hz]')
-    # ax0.set_title('Spectrogram')
+    ax_controls = fig.add_subplot(gs[2])
+    ax_controls.axis('off')
 
-    raw_line, = ax[0].plot([], [], color='darkred')
-    ax[0].set_title('Raw Power')
+    ax = [ax0, ax1]
+
+    smooth_line, = ax[0].plot([], [], color='navy')
+    thresh_line, = ax[0].plot([], [], color='red', linestyle='--', label='Threshold')
+
+    ax[0].legend()
+    ax[0].set_title('Smoothed Power + Threshold')
     ax[0].grid(True)
 
-    smooth_line, = ax[1].plot([], [], color='navy')
-    thresh_line, = ax[1].plot([], [], color='red', linestyle='--', label='Threshold')
-
-    ax[1].legend()
-    ax[1].set_title('Smoothed Power + Threshold')
+    binary_line, = ax[1].plot([], [], color='black')
+    ax[1].set_title('Cleaned Binary')
+    ax[1].set_xlabel('Time [s]')
     ax[1].grid(True)
 
-    binary_line, = ax[2].plot([], [], color='black')
-    ax[2].set_title('Cleaned Binary')
-    ax[2].set_xlabel('Time [s]')
-    ax[2].grid(True)
-
-    pos = ax[2].get_position()
-    ax[2].set_position([pos.x0, pos.y0 - 0.06, pos.width, pos.height])
+    plt.subplots_adjust(top=0.85)
 
     slider_ax = plt.axes([0.15, 0.05, 0.7, 0.03])
     slider = Slider(slider_ax, 'Threshold %', 0, 100, valinit=args.percentage, valstep=1)
+
+    ax_box1 = plt.axes([0.25, 0.08, 0.1, 0.035])
+    zt_text_box = TextBox(ax_box1, 'Consecutive zero thresh.:', initial=str(args.zero_threshold))
+
+    ax_box2 = plt.axes([0.65, 0.08, 0.1, 0.035])
+    smt_text_box = TextBox(ax_box2, 'Smoothing window:', initial=str(args.smooth_window))
+
+    text_box = fig.text(0.5, 0.01, "", ha="center", fontsize=12)
 
     def on_zt_submit(text):
         try:
@@ -217,10 +221,6 @@ def interactive_mode(data, rate, args):
         except ValueError:
             print("Zero Thresh must be an integer")
 
-    ax_box = plt.axes([0.25, 0.08, 0.1, 0.035])
-    zt_text_box = TextBox(ax_box, 'Consecutive zero thresh.:', initial=str(args.zero_threshold))
-    zt_text_box.on_submit(on_zt_submit)
-
     def on_smt_submit(text):
         try:
             args.smooth_window = int(text)
@@ -228,11 +228,8 @@ def interactive_mode(data, rate, args):
         except ValueError:
             print("Smoothing window must be an integer")
 
-    ax_box = plt.axes([0.65, 0.08, 0.1, 0.035])
-    smt_text_box = TextBox(ax_box, 'Smoothing window:', initial=str(args.smooth_window))
+    zt_text_box.on_submit(on_zt_submit)
     smt_text_box.on_submit(on_smt_submit)
-
-    text_box = fig.text(0.5, 0.01, "", ha="center", fontsize=12)
 
     # power, smoothed_power, times = getSEnergy(data, rate)
 
@@ -265,25 +262,27 @@ def interactive_mode(data, rate, args):
         morse_for_graph = re.sub(r'/+', '/', morse_elements).replace('/', '').replace(' ', '')
         cleaned_text = re.sub(r'\?+', ' ', all_text).strip()
 
-        [l.remove() for l in ax[2].lines[1:]]
-        [t.remove() for t in ax[2].texts]
-        [v.remove() for v in ax[1].texts]
+        [l.remove() for l in ax[1].lines[1:]]
+        [t.remove() for t in ax[1].texts]
+        [v.remove() for v in ax[0].texts]
 
-        raw_line.set_data(times, power)
-        ax[0].relim(); ax[0].autoscale_view()
+        # raw_line.set_data(times, power)
+        # ax[0].relim(); ax[0].autoscale_view()
 
         smooth_line.set_data(times, smoothed_power)
         thresh_line.set_data(times, np.full_like(times, threshold))
+        ax[0].relim(); ax[0].autoscale_view()
+
+        # binary_line.set_data(times, binary_signal * np.max(smoothed_power))
+        binary_line.set_data(times, binary_signal)
+        ax[1].set_ylim(-0.1, 1.1)
         ax[1].relim(); ax[1].autoscale_view()
 
-        binary_line.set_data(times, binary_signal * np.max(smoothed_power))
-        ax[2].relim(); ax[2].autoscale_view()
-
         for i, ct in enumerate(center_times):
-            ax[2].axvline(x=ct, color='green', linestyle='--', alpha=0.6)
+            ax[1].axvline(x=ct, color='green', linestyle='--', alpha=0.6)
             if i < len(chunk_wpms):
                 wpm = chunk_wpms[i]
-                ax[2].text(ct, 1.15 * np.max(smoothed_power), f'{wpm:.1f} wpm',
+                ax[1].text(ct, 1.15 * np.max(smoothed_power), f'{wpm:.1f} wpm',
                            fontsize=10, ha='center', va='bottom', rotation=90, color='green')
 
         rising_edges = (np.diff(binary_signal.astype(int)) == 1).nonzero()[0] + 1
@@ -291,14 +290,22 @@ def interactive_mode(data, rate, args):
         for i in range(num_symbols):
             t = times[rising_edges[i]]
             symbol = morse_for_graph[i]
-            ax[2].text(t, 1.05 * np.max(smoothed_power), symbol, fontsize=14,
+            ax[1].text(t, 1.05 * np.max(smoothed_power), symbol, fontsize=14,
                        ha='center', va='bottom', color='blue')
 
         # fig.suptitle(f"Decoded: {cleaned_text}", fontsize=14)
         wrapped_title = "\n".join(textwrap.wrap(cleaned_text, width=60))
         fig.suptitle(wrapped_title, fontsize=16)
-        text_box.set_text(f"Threshold: {pct}%")
 
+        n_lines = wrapped_title.count('\n') + 1
+        top_margin = 0.92 - 0.04 * (n_lines - 1)
+        top_margin = max(top_margin, 0.75)
+
+        plt.subplots_adjust(top=top_margin, bottom=0.12)
+
+        text_box.set_text(f"Threshold: {pct}%")
+        plt.subplots_adjust(hspace=0.4)
+        
         fig.canvas.draw_idle()
 
     update(args.percentage)
