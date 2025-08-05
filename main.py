@@ -51,6 +51,7 @@ def main():
         default=3,
         help="Width of smoothing window (integer)."
     )
+    parser.add_argument("--spectrogram_plot", action="store_true", help="Plot diagrams")
 
     args = parser.parse_args()
 
@@ -176,35 +177,35 @@ def main():
         f.write(cleaned_morse + "\n")
 
 def interactive_mode(data, rate, args):
-    fig, ax = plt.subplots(4, 1, figsize=(12, 10), sharex=True)
+    fig, ax = plt.subplots(3, 1, figsize=(12, 10), sharex=True)
     plt.subplots_adjust(bottom=0.25)
 
-    f, t_spec, Sxx = spectrogram(data, fs=rate, nperseg=256, noverlap=0)
-    Sxx_dB = 10 * np.log10(Sxx + 1e-10)
+    # f, t_spec, Sxx = spectrogram(data, fs=rate, nperseg=256, noverlap=0)
+    # Sxx_dB = 10 * np.log10(Sxx + 1e-10)
 
-    ax0 = ax[0]
-    im = ax0.pcolormesh(t_spec, f, Sxx_dB, shading='gouraud', cmap='magma')
-    ax0.set_ylabel('Freq [Hz]')
-    ax0.set_title('Spectrogram')
+    # ax0 = ax[0]
+    # im = ax0.pcolormesh(t_spec, f, Sxx_dB, shading='gouraud', cmap='magma')
+    # ax0.set_ylabel('Freq [Hz]')
+    # ax0.set_title('Spectrogram')
 
-    raw_line, = ax[1].plot([], [], color='darkred')
-    ax[1].set_title('Raw Power')
+    raw_line, = ax[0].plot([], [], color='darkred')
+    ax[0].set_title('Raw Power')
+    ax[0].grid(True)
+
+    smooth_line, = ax[1].plot([], [], color='navy')
+    thresh_line, = ax[1].plot([], [], color='red', linestyle='--', label='Threshold')
+
+    ax[1].legend()
+    ax[1].set_title('Smoothed Power + Threshold')
     ax[1].grid(True)
 
-    smooth_line, = ax[2].plot([], [], color='navy')
-    thresh_line, = ax[2].plot([], [], color='red', linestyle='--', label='Threshold')
-
-    ax[2].legend()
-    ax[2].set_title('Smoothed Power + Threshold')
+    binary_line, = ax[2].plot([], [], color='black')
+    ax[2].set_title('Cleaned Binary')
+    ax[2].set_xlabel('Time [s]')
     ax[2].grid(True)
 
-    binary_line, = ax[3].plot([], [], color='black')
-    ax[3].set_title('Cleaned Binary')
-    ax[3].set_xlabel('Time [s]')
-    ax[3].grid(True)
-
-    pos = ax[3].get_position()
-    ax[3].set_position([pos.x0, pos.y0 - 0.06, pos.width, pos.height])
+    pos = ax[2].get_position()
+    ax[2].set_position([pos.x0, pos.y0 - 0.06, pos.width, pos.height])
 
     slider_ax = plt.axes([0.15, 0.05, 0.7, 0.03])
     slider = Slider(slider_ax, 'Threshold %', 0, 100, valinit=args.percentage, valstep=1)
@@ -264,25 +265,25 @@ def interactive_mode(data, rate, args):
         morse_for_graph = re.sub(r'/+', '/', morse_elements).replace('/', '').replace(' ', '')
         cleaned_text = re.sub(r'\?+', ' ', all_text).strip()
 
-        [l.remove() for l in ax[3].lines[1:]]
-        [t.remove() for t in ax[3].texts]
-        [v.remove() for v in ax[2].texts]
+        [l.remove() for l in ax[2].lines[1:]]
+        [t.remove() for t in ax[2].texts]
+        [v.remove() for v in ax[1].texts]
 
         raw_line.set_data(times, power)
-        ax[1].relim(); ax[1].autoscale_view()
+        ax[0].relim(); ax[0].autoscale_view()
 
         smooth_line.set_data(times, smoothed_power)
         thresh_line.set_data(times, np.full_like(times, threshold))
-        ax[2].relim(); ax[2].autoscale_view()
+        ax[1].relim(); ax[1].autoscale_view()
 
         binary_line.set_data(times, binary_signal * np.max(smoothed_power))
-        ax[3].relim(); ax[3].autoscale_view()
+        ax[2].relim(); ax[2].autoscale_view()
 
         for i, ct in enumerate(center_times):
-            ax[3].axvline(x=ct, color='green', linestyle='--', alpha=0.6)
+            ax[2].axvline(x=ct, color='green', linestyle='--', alpha=0.6)
             if i < len(chunk_wpms):
                 wpm = chunk_wpms[i]
-                ax[3].text(ct, 1.15 * np.max(smoothed_power), f'{wpm:.1f} wpm',
+                ax[2].text(ct, 1.15 * np.max(smoothed_power), f'{wpm:.1f} wpm',
                            fontsize=10, ha='center', va='bottom', rotation=90, color='green')
 
         rising_edges = (np.diff(binary_signal.astype(int)) == 1).nonzero()[0] + 1
@@ -290,7 +291,7 @@ def interactive_mode(data, rate, args):
         for i in range(num_symbols):
             t = times[rising_edges[i]]
             symbol = morse_for_graph[i]
-            ax[3].text(t, 1.05 * np.max(smoothed_power), symbol, fontsize=14,
+            ax[2].text(t, 1.05 * np.max(smoothed_power), symbol, fontsize=14,
                        ha='center', va='bottom', color='blue')
 
         # fig.suptitle(f"Decoded: {cleaned_text}", fontsize=14)
